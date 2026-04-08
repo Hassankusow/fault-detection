@@ -117,7 +117,7 @@ with right:
         return f"color: {RISK_COLOR.get(val, 'white')}; font-weight: bold"
 
     st.dataframe(
-        display.style.applymap(color_risk, subset=["Risk"]),
+        display.style.map(color_risk, subset=["Risk"]),
         use_container_width=True, height=350,
     )
 
