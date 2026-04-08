@@ -3,12 +3,17 @@ dashboard.py  —  Streamlit dashboard
 Equipment Health Monitor: anomaly detection, MTBF/MTTR, fault trends
 """
 
+import sys
 import sqlite3
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from pathlib import Path
+
+# make src/ importable when running from repo root
+sys.path.insert(0, str(Path(__file__).parent))
 
 DB = Path("data/equipment.db")
 
@@ -19,6 +24,28 @@ st.set_page_config(
 )
 
 RISK_COLOR = {"HIGH": "#ef4444", "MEDIUM": "#f59e0b", "LOW": "#22c55e"}
+
+
+@st.cache_resource(show_spinner="Building dataset — this takes ~10 seconds on first run…")
+def ensure_data():
+    """Generate synthetic data if the DB doesn't exist yet."""
+    if not DB.exists():
+        from generate_logs import generate, save
+        from parse_logs import parse_log_file, load_to_db
+        from anomaly_detection import load_telemetry, detect, save_anomalies
+        from reliability_metrics import compute_metrics
+
+        records = generate(days=90)
+        save(records, DB.parent)
+        parsed = parse_log_file(DB.parent / "equipment_logs.txt")
+        load_to_db(parsed, DB)
+        df = load_telemetry(DB)
+        df = detect(df)
+        save_anomalies(df, DB)
+        compute_metrics(DB)
+
+
+ensure_data()
 
 
 @st.cache_data(ttl=60)
