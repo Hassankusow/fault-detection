@@ -45,7 +45,7 @@ telemetry["timestamp"] = pd.to_datetime(telemetry["timestamp"])
 total_eq   = metrics["equipment_id"].nunique()
 high_risk  = (metrics["risk_level"] == "HIGH").sum()
 avg_health = anomalies.groupby("equipment_id")["health_score"].last().mean()
-total_faults = (telemetry["status"] == "FAULT").sum()
+total_faults = int((telemetry["status"] == "FAULT").sum())
 
 k1, k2, k3, k4 = st.columns(4)
 k1.metric("Equipment Units",   total_eq)
@@ -135,7 +135,7 @@ st.divider()
 # ── Anomaly table ─────────────────────────────────────────────────────────────
 st.subheader("Recent Anomalies")
 recent = (
-    anomalies[anomalies["anomaly"]]
+    anomalies[anomalies["anomaly"] == 1]
     .sort_values("timestamp", ascending=False)
     .head(50)[["timestamp","equipment_id","equipment_type",
                "temperature_c","vibration_mm_s","pressure_bar",
